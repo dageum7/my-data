@@ -79,9 +79,12 @@ try:
     )
 
     # 요약통계 계산
-    summary = df[
-        ["평균기온", "최저기온", "최고기온"]
-    ].describe().T
+   summary = df[
+    ["평균기온", "최저기온", "최고기온"]
+].describe().T
+
+# 행과 열을 서로 바꾸기
+summary = summary.T
 
     # 보기 좋은 한글 이름으로 변경
     summary = summary.rename(
