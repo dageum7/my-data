@@ -47,9 +47,7 @@ try:
     # 데이터 불러오기
     df, yearly = load_data()
 
-    # -----------------------------
     # 제목
-    # -----------------------------
     st.title("🌡️ 서울의 100년 기온 변화")
 
     st.write(
@@ -57,38 +55,31 @@ try:
         "연평균 기온의 장기적인 변화를 살펴봅니다."
     )
 
-    # -----------------------------
     # 데이터 기간
-    # -----------------------------
     start_year = int(yearly["연도"].min())
     end_year = int(yearly["연도"].max())
 
     st.info(
-        f"📅 분석 기간: **{start_year}년 ~ {end_year}년**  |  "
+        f"📅 분석 기간: **{start_year}년 ~ {end_year}년** | "
         f"연평균 기온을 계산할 수 있는 연도: **{len(yearly)}개**"
     )
 
-    # -----------------------------
-    # 원본 데이터 요약
-    # -----------------------------
+    # 원본 데이터 요약통계
     st.subheader("📊 원본 데이터 요약통계")
 
     st.write(
-        "원본 일별 데이터에서 평균기온·최저기온·최고기온의 "
-        "개수, 평균, 최소값, 사분위수, 최대값을 확인할 수 있습니다."
+        "원본 일별 데이터의 평균기온, 최저기온, 최고기온에 대한 "
+        "개수, 평균, 표준편차, 최소값, 중앙값, 최대값 등을 보여줍니다."
     )
 
     # 요약통계 계산
-   summary = df[
-    ["평균기온", "최저기온", "최고기온"]
-].describe().T
+    summary = df[
+        ["평균기온", "최저기온", "최고기온"]
+    ].describe()
 
-# 행과 열을 서로 바꾸기
-summary = summary.T
-
-    # 보기 좋은 한글 이름으로 변경
+    # 행과 열을 반대로 변경
     summary = summary.rename(
-        columns={
+        index={
             "count": "개수",
             "mean": "평균",
             "std": "표준편차",
@@ -97,26 +88,19 @@ summary = summary.T
             "50%": "중앙값",
             "75%": "75% 값",
             "max": "최대"
-        },
-        index={
-            "평균기온": "평균기온 (℃)",
-            "최저기온": "최저기온 (℃)",
-            "최고기온": "최고기온 (℃)"
         }
     )
 
-    # 숫자 표시 형식
-    summary["개수"] = summary["개수"].astype(int)
+    # 보기 좋게 반올림
     summary = summary.round(2)
 
+    # 요약통계 표시
     st.dataframe(
         summary,
         use_container_width=True
     )
 
-    # -----------------------------
     # 연평균 기온 그래프
-    # -----------------------------
     st.subheader("📈 연도별 평균기온 변화")
 
     chart_data = yearly.set_index("연도")
@@ -129,9 +113,7 @@ summary = summary.T
         use_container_width=True
     )
 
-    # -----------------------------
-    # 주요 통계
-    # -----------------------------
+    # 주요 기록
     st.subheader("🔎 주요 기록")
 
     col1, col2, col3 = st.columns(3)
@@ -164,9 +146,7 @@ summary = summary.T
             f"{change:+.1f} ℃"
         )
 
-    # -----------------------------
     # 연도별 데이터
-    # -----------------------------
     with st.expander("📋 연도별 평균기온 데이터 보기"):
         display_data = yearly.copy()
         display_data["평균기온"] = display_data["평균기온"].round(2)
@@ -177,9 +157,7 @@ summary = summary.T
             hide_index=True
         )
 
-    # -----------------------------
     # 원본 데이터
-    # -----------------------------
     with st.expander("📄 원본 데이터 일부 보기"):
         st.dataframe(
             df.head(100),
