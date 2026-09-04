@@ -55,29 +55,74 @@ try:
         "연평균 기온의 장기적인 변화를 살펴봅니다."
     )
 
-    # 데이터 기간
+    # --------------------------------
+    # 데이터 기본 정보
+    # --------------------------------
+    st.subheader("📌 데이터 기본 정보")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric("전체 데이터 개수", f"{len(df):,}개")
+
+    with col2:
+        st.metric(
+            "관측 지점 수",
+            f"{df['지점'].nunique():,}개"
+        )
+
+    with col3:
+        st.metric(
+            "시작 연도",
+            f"{df['날짜'].dt.year.min()}년"
+        )
+
+    with col4:
+        st.metric(
+            "마지막 연도",
+            f"{df['날짜'].dt.year.max()}년"
+        )
+
+    # 지점 정보
+    st.write("**관측 지점:**")
+
+    stations = df["지점"].dropna().unique()
+
+    if len(stations) == 1:
+        st.info(f"서울 관측 지점 번호: **{stations[0]}**")
+    else:
+        st.info(
+            "관측 지점 번호: "
+            + ", ".join(map(str, stations))
+        )
+
+    # --------------------------------
+    # 분석 기간
+    # --------------------------------
     start_year = int(yearly["연도"].min())
     end_year = int(yearly["연도"].max())
 
     st.info(
-        f"📅 분석 기간: **{start_year}년 ~ {end_year}년** | "
+        f"📅 연평균 기온 분석 기간: **{start_year}년 ~ {end_year}년** | "
         f"연평균 기온을 계산할 수 있는 연도: **{len(yearly)}개**"
     )
 
+    # --------------------------------
     # 원본 데이터 요약통계
+    # --------------------------------
     st.subheader("📊 원본 데이터 요약통계")
 
     st.write(
         "원본 일별 데이터의 평균기온, 최저기온, 최고기온에 대한 "
-        "개수, 평균, 표준편차, 최소값, 중앙값, 최대값 등을 보여줍니다."
+        "개수, 평균, 표준편차, 최소값, 중앙값, 최대값입니다."
     )
 
-    # 요약통계 계산
     summary = df[
         ["평균기온", "최저기온", "최고기온"]
     ].describe()
 
-    # 행과 열을 반대로 변경
+    # 행과 열은 기존처럼 유지
+    # → 통계 항목이 행, 기온 종류가 열
     summary = summary.rename(
         index={
             "count": "개수",
@@ -91,16 +136,16 @@ try:
         }
     )
 
-    # 보기 좋게 반올림
     summary = summary.round(2)
 
-    # 요약통계 표시
     st.dataframe(
         summary,
         use_container_width=True
     )
 
+    # --------------------------------
     # 연평균 기온 그래프
+    # --------------------------------
     st.subheader("📈 연도별 평균기온 변화")
 
     chart_data = yearly.set_index("연도")
@@ -113,13 +158,17 @@ try:
         use_container_width=True
     )
 
+    # --------------------------------
     # 주요 기록
+    # --------------------------------
     st.subheader("🔎 주요 기록")
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        lowest = yearly.loc[yearly["평균기온"].idxmin()]
+        lowest = yearly.loc[
+            yearly["평균기온"].idxmin()
+        ]
 
         st.metric(
             "가장 낮은 연평균 기온",
@@ -128,7 +177,9 @@ try:
         )
 
     with col2:
-        highest = yearly.loc[yearly["평균기온"].idxmax()]
+        highest = yearly.loc[
+            yearly["평균기온"].idxmax()
+        ]
 
         st.metric(
             "가장 높은 연평균 기온",
@@ -146,10 +197,14 @@ try:
             f"{change:+.1f} ℃"
         )
 
+    # --------------------------------
     # 연도별 데이터
+    # --------------------------------
     with st.expander("📋 연도별 평균기온 데이터 보기"):
         display_data = yearly.copy()
-        display_data["평균기온"] = display_data["평균기온"].round(2)
+        display_data["평균기온"] = display_data[
+            "평균기온"
+        ].round(2)
 
         st.dataframe(
             display_data,
@@ -157,7 +212,9 @@ try:
             hide_index=True
         )
 
+    # --------------------------------
     # 원본 데이터
+    # --------------------------------
     with st.expander("📄 원본 데이터 일부 보기"):
         st.dataframe(
             df.head(100),
