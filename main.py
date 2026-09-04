@@ -21,7 +21,11 @@ DATA_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/seoul
 # ==========================================
 @st.cache_data
 def load_data():
-    df = pd.read_csv(DATA_URL, encoding="utf-8")
+
+    df = pd.read_csv(
+        DATA_URL,
+        encoding="utf-8"
+    )
 
     # 날짜 변환
     df["날짜"] = pd.to_datetime(
@@ -29,28 +33,35 @@ def load_data():
         errors="coerce"
     )
 
-    # 기온 데이터 숫자형 변환
-    temperature_columns = [
+    # 숫자형으로 변환할 열
+    numeric_columns = [
+        "지점",
         "평균기온",
         "최저기온",
         "최고기온"
     ]
 
-    for column in temperature_columns:
+    for column in numeric_columns:
         df[column] = pd.to_numeric(
             df[column],
             errors="coerce"
         )
 
-    # 날짜가 없는 데이터 제거
-    df = df.dropna(subset=["날짜"])
+    # 날짜가 없는 행 제거
+    df = df.dropna(
+        subset=["날짜"]
+    )
 
     # 연도 추가
     df["연도"] = df["날짜"].dt.year
 
-    # 연평균 기온 계산
+    # ======================================
+    # 연도별 연평균 기온 계산
+    # ======================================
     yearly = (
-        df.dropna(subset=["평균기온"])
+        df.dropna(
+            subset=["평균기온"]
+        )
         .groupby("연도")["평균기온"]
         .mean()
         .reset_index()
@@ -60,7 +71,7 @@ def load_data():
 
 
 # ==========================================
-# 프로그램 실행
+# 앱 실행
 # ==========================================
 try:
 
@@ -72,8 +83,8 @@ try:
     st.title("🌡️ 서울의 100년 기온 변화")
 
     st.write(
-        "서울의 일별 기온 데이터를 이용하여 "
-        "약 100년 동안 연평균 기온이 어떻게 변화해 왔는지 살펴봅니다."
+        "서울의 기온 데이터를 이용하여 "
+        "100년 동안 연평균 기온이 어떻게 변화해 왔는지 살펴봅니다."
     )
 
     # ======================================
@@ -91,7 +102,7 @@ try:
 
     with col2:
         st.metric(
-            "관측 지점 수",
+            "관측 지점",
             f"{df['지점'].nunique():,}개"
         )
 
@@ -108,89 +119,50 @@ try:
         )
 
     # ======================================
-    # 분석 기간
-    # ======================================
-    start_year = int(yearly["연도"].min())
-    end_year = int(yearly["연도"].max())
-
-    st.info(
-        f"📅 연평균 기온 분석 기간: "
-        f"**{start_year}년 ~ {end_year}년**  "
-        f"(총 **{len(yearly)}개 연도**)"
-    )
-
-    # ======================================
     # 원본 데이터 요약통계
     # ======================================
     st.subheader("📊 원본 데이터 요약통계")
 
     st.write(
-        "원본 데이터의 지점 및 기온 자료에 대한 "
-        "개수, 평균, 표준편차, 최소값, 중앙값, 최대값 등의 통계입니다."
+        "원본 데이터의 지점, 평균기온, 최저기온, 최고기온에 대한 "
+        "요약통계입니다."
     )
 
-    # --------------------------------------
-    # 기온 데이터 요약통계
-    # --------------------------------------
-    temperature_summary = df[
-        ["평균기온", "최저기온", "최고기온"]
+    # 사진과 동일하게 지점까지 포함
+    summary = df[
+        [
+            "지점",
+            "평균기온",
+            "최저기온",
+            "최고기온"
+        ]
     ].describe()
 
-    temperature_summary = temperature_summary.rename(
+    # 통계 이름을 한글로 변경
+    summary = summary.rename(
         index={
             "count": "개수",
             "mean": "평균",
             "std": "표준편차",
             "min": "최소",
-            "25%": "25% 값",
-            "50%": "중앙값",
-            "75%": "75% 값",
+            "25%": "25%",
+            "50%": "50% (중앙값)",
+            "75%": "75%",
             "max": "최대"
         }
     )
 
-    # --------------------------------------
-    # 지점 통계
-    # --------------------------------------
-    station_count = df["지점"].count()
-    station_unique = df["지점"].nunique()
-
-    if not df["지점"].mode().empty:
-        station_mode = df["지점"].mode().iloc[0]
-    else:
-        station_mode = "-"
-
-    station_summary = pd.Series(
-        {
-            "개수": station_count,
-            "고유 지점 수": station_unique,
-            "최빈값": station_mode
-        },
-        name="지점"
-    )
-
-    # --------------------------------------
-    # 지점 + 기온 통계 합치기
-    # --------------------------------------
-    summary = pd.concat(
-        [
-            station_summary.to_frame(),
-            temperature_summary
-        ],
-        axis=1
-    )
-
-    # 숫자 반올림
+    # 소수점 둘째 자리까지 표시
     summary = summary.round(2)
 
-    # 표 표시
+    # 통계표 표시
     st.dataframe(
         summary,
         use_container_width=True
     )
 
     # ======================================
-    # 연평균 기온 변화 그래프
+    # 연평균 기온 그래프
     # ======================================
     st.subheader("📈 연도별 연평균 기온 변화")
 
